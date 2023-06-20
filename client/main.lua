@@ -36,9 +36,63 @@ end)
 AddEventHandler('onResourceStop', function(r)
     if r == GetCurrentResourceName()
     then
-        reset()
+        reset() 
+        cleanup()
         end
 end)
+
+AddEventHandler('onResourceStart', function(r)
+    if r == GetCurrentResourceName()
+    then
+        locuri_procesat()
+        end
+end)
+
+-- FUNCTII
+
+function locuri_procesat()
+
+    exports['qb-target']:AddBoxZone("coca_procesare1",vector3(4980.76, -5132.42, -4.47), 2, 2, {
+        name = "coca_procesare",
+        heading=0,
+        debugPoly = true,
+        minZ = -8.07,
+        maxZ = -4.07,
+    }, {
+        options = {
+            {
+                type = "client",
+                event = "ef-cocaina:procesatcoca",
+                icon = 'fas fa-low-vision',
+                label = 'Proceseaza',
+            },
+        },
+        distance = 3
+    })
+
+    exports['qb-target']:AddBoxZone("coca_procesare2",vector3(4983.27, -5132.0, -4.47), 2, 2, {
+        name = "coca_procesare",
+        heading=0,
+        debugPoly = true,
+        minZ = -7.87,
+        maxZ = -3.87,
+    }, {
+        options = {
+            {
+                type = "client",
+                event = "ef-cocaina:procesatcoca",
+                icon = 'fas fa-low-vision',
+                label = 'Proceseaza',
+            },
+        },
+        distance = 3
+    })
+end
+
+function cleanup()
+    exports['qb-target']:RemoveZone("coca_procesare1")
+    exports['qb-target']:RemoveZone("coca_procesare2")
+end
 
 function StergePlanta()
     ped = GetPlayerPed(-1)
@@ -53,30 +107,6 @@ end
 local hashmic = "prop_weed_02"
 local hashmare = "prop_weed_01"
 
-RegisterCommand('delpl',function()
-    StergePlanta()
-end)
-
-RegisterCommand('statuspl',function()
-    for k, v in pairs(plante or {}) do 
-        print("Planta: " .. k .. plante[k].status)
-    end
-end)
-
-RegisterCommand("aproape",function()
-    ped = GetPlayerPed(-1)
-    pos = GetEntityCoords(ped)
-    obiect = QBCore.Functions.GetClosestObject(pos)
-    print("id obiect: " .. obiect)
-    cautat = GetEntityCoords(obiect)
-    print("coord obiect aproape: " .. cautat)
-    for k, v in pairs(plante or {}) do 
-        print(k .. plante[k].coords)
-        if plante[k].coords.x   == cautat.x and plante[k].coords.y == cautat.y then
-            plante[k].status = "nuexista" 
-        end
-    end
-end)
 
 function harvestplant()
     ped = GetPlayerPed(-1)
@@ -124,10 +154,63 @@ function harvest()
     
 end
 
-RegisterNetEvent("ef-cocaina:harvest")
-AddEventHandler("ef-cocaina:harvest", function()
-    harvest()
-end)
+function impachetat_planta()
+    ped = GetPlayerPed(-1)
+    coord = QBCore.Functions.GetCoords(ped)
+
+    item = QBCore.Functions.HasItem("planta coca")
+    if item then
+        QBCore.Functions.Progressbar("harvest_cocaina", ('Impachetam'), 8000, false, true, {
+            disableMovement = true,
+            disableCarMovement = true,
+            disableMouse = false,
+            disableCombat = true,
+            flags = 16,
+            }, {
+            animDict = "anim@amb@clubhouse@tutorial@bkr_tut_ig3@",
+            anim = "machinic_loop_mechandplayer",
+            flags = 16,
+            }, {}, {}, function() -- Done
+            DeleteObject(prop)
+            StopAnimTask(ped, "anim@amb@clubhouse@tutorial@bkr_tut_ig3@", "machinic_loop_mechandplayer", 1.0)
+            end)
+    end
+end
+
+function procesat_planta()
+        ped = GetPlayerPed(-1)
+        coord = QBCore.Functions.GetCoords(ped)
+
+        local animDict = "anim@amb@business@coc@coc_unpack_cut_left@"
+        RequestAnimDict(animDict)
+        while not HasAnimDictLoaded(animDict) do Citizen.Wait(10) end
+        RequestModel("bkr_prop_coke_bakingsoda_o")
+        RequestModel("prop_cs_credit_card")
+        while not HasModelLoaded("prop_cs_credit_card") and not HasModelLoaded("bkr_prop_coke_bakingsoda_o") do Citizen.Wait(10) end
+        SetEntityHeading(ped)
+        Citizen.Wait(10)
+        vector3(4976.94, -5132.98, -4.43)
+
+        vector3(4980.71, -5132.64, -4.47)
+        local card = CreateObject(GetHashKey("prop_cs_credit_card"), coord.x, coord.y, coord.z, true, false, false)
+        local card2 = CreateObject(GetHashKey("prop_cs_credit_card"), coord.x, coord.y, coord.z, true, false, false)
+        local soda = CreateObject(GetHashKey("bkr_prop_coke_bakingsoda_o"), coord.x, coord.y, coord.z, true, false, false)
+        local gathScene = NetworkCreateSynchronisedScene(coord.x + 2  , coord.y + 0.5 , coord.z - 0.6 , 0.0, 0.0, 180.0 , 2, false, false, 1065353216, 0, 1.3)
+        NetworkAddPedToSynchronisedScene(ped, gathScene, animDict, "coke_cut_v5_coccutter", 1.5, -4.0, 1, 16, 1148846080, 0)
+        NetworkAddEntityToSynchronisedScene(card, gathScene, animDict, "coke_cut_v5_creditcard", 4.0, -8.0, 1)
+        NetworkAddEntityToSynchronisedScene(card2, gathScene, animDict, "coke_cut_v5_creditcard^1", 4.0, -8.0, 1)
+        NetworkAddEntityToSynchronisedScene(soda, gathScene, animDict, "coke_cut_v5_bakingsoda", 4.0, -8.0, 1)
+        NetworkStartSynchronisedScene(gathScene)
+        Citizen.Wait(20000)
+        NetworkStopSynchronisedScene(gathScene)
+        DeleteEntity(card)
+        DeleteEntity(card2)
+        DeleteEntity(soda)
+        Wait(3000)
+        StopAnimTask(ped, dict, anim, 1.0)
+        ClearPedTasksImmediately(ped)
+        Wait(3000)
+end
 
 function spawn()
     for k, v in pairs(plante or {}) do
@@ -181,6 +264,32 @@ Citizen.CreateThread(function()
         Wait(60000)
     end    
 end)
+
+-- EVENTS
+
+RegisterNetEvent("ef-cocaina:procesatcoca")
+AddEventHandler("ef-cocaina:procesatcoca",function()
+    procesat_planta()
+end)
+
+RegisterNetEvent("ef-cocaina:harvest")
+AddEventHandler("ef-cocaina:harvest", function()
+    harvest()
+end)
+
+-- COMENZI (MAINLY DEBUG)
+
+
+RegisterCommand('delpl',function()
+    StergePlanta()
+end)
+
+RegisterCommand('statuspl',function()
+    for k, v in pairs(plante or {}) do 
+        print("Planta: " .. k .. plante[k].status)
+    end
+end)
+
 
 -- plante
 plante = {
