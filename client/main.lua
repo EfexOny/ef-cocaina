@@ -52,6 +52,42 @@ end)
 
 function locuri_procesat()
 
+    exports['qb-target']:AddBoxZone("coca_infoliaza1",vector3(4992.8, -5137.54, -4.47), 1, 1, {
+        name = "coca_procesare",
+        heading=0,
+        debugPoly = true,
+        minZ = -8.07,
+        maxZ = -4.07,
+    }, {
+        options = {
+            {
+                type = "client",
+                event = "ef-cocaina:infoliazacoca",
+                icon = 'fas fa-low-vision',
+                label = 'Infoliaza',
+            },
+        },
+        distance = 1
+    })
+
+    exports['qb-target']:AddBoxZone("coca_infoliaza2",vector3(4992.53, -5134.68, -4.47), 1, 1, {
+        name = "coca_procesare",
+        heading=0,
+        debugPoly = true,
+        minZ = -8.07,
+        maxZ = -4.07,
+    }, {
+        options = {
+            {
+                type = "client",
+                event = "ef-cocaina:infoliazacoca",
+                icon = 'fas fa-low-vision',
+                label = 'Infoliaza',
+            },
+        },
+        distance = 1
+    })
+
     exports['qb-target']:AddBoxZone("coca_procesare1",vector3(4980.76, -5132.42, -4.47), 2, 2, {
         name = "coca_procesare",
         heading=0,
@@ -67,7 +103,7 @@ function locuri_procesat()
                 label = 'Proceseaza',
             },
         },
-        distance = 3
+        distance = 1
     })
 
     exports['qb-target']:AddBoxZone("coca_procesare2",vector3(4983.27, -5132.0, -4.47), 2, 2, {
@@ -85,13 +121,15 @@ function locuri_procesat()
                 label = 'Proceseaza',
             },
         },
-        distance = 3
+        distance = 2
     })
 end
 
 function cleanup()
     exports['qb-target']:RemoveZone("coca_procesare1")
     exports['qb-target']:RemoveZone("coca_procesare2")
+    exports['qb-target']:RemoveZone("coca_infoliaza1")
+    exports['qb-target']:RemoveZone("coca_infoliaza2")
 end
 
 function StergePlanta()
@@ -112,9 +150,7 @@ function harvestplant()
     ped = GetPlayerPed(-1)
     pos = GetEntityCoords(ped)
     obiect = QBCore.Functions.GetClosestObject(pos)
-    print("id obiect: " .. obiect)
     cautat = GetEntityCoords(obiect)
-    print("coord obiect aproape: " .. cautat)
     for k, v in pairs(plante or {}) do 
         print(k .. plante[k].coords)
         if plante[k].coords.x   == cautat.x and plante[k].coords.y == cautat.y then
@@ -158,22 +194,32 @@ function impachetat_planta()
     ped = GetPlayerPed(-1)
     coord = QBCore.Functions.GetCoords(ped)
 
-    item = QBCore.Functions.HasItem("planta coca")
+    item = QBCore.Functions.HasItem("coca procesata")
     if item then
-        QBCore.Functions.Progressbar("harvest_cocaina", ('Impachetam'), 8000, false, true, {
-            disableMovement = true,
-            disableCarMovement = true,
-            disableMouse = false,
-            disableCombat = true,
-            flags = 16,
+            QBCore.Functions.Progressbar('impachetat_coca', 'Impachetam', 8000, false, true, {
+                disableMovement = true,
+                disableCarMovement = true,
+                disableMouse = false,
+                disableCombat = true,
             }, {
-            animDict = "anim@amb@clubhouse@tutorial@bkr_tut_ig3@",
-            anim = "machinic_loop_mechandplayer",
-            flags = 16,
-            }, {}, {}, function() -- Done
-            DeleteObject(prop)
+                animDict = 'anim@amb@clubhouse@tutorial@bkr_tut_ig3@',
+                anim = 'machinic_loop_mechandplayer',
+                flags = 16,
+            }, {
+                model = 'bkr_prop_weed_bag_01a',
+                bone = 57005,
+                coords = { x = 0.18, y = 0.0, z = -0.03 },
+                rotation = { x = 0.0, y = 0.0, z = 0.0 },
+            },{
+               
+            }, function() -- Play When Done
             StopAnimTask(ped, "anim@amb@clubhouse@tutorial@bkr_tut_ig3@", "machinic_loop_mechandplayer", 1.0)
+            QBCore.Functions.Notify("Ai impachetat coca cu succes!","success")
+            TriggerServerEvent("ef-cocaina:server:remove","coca procesata")
+            TriggerServerEvent("ef-cocaina:server:add","coca impachetata")
             end)
+        else 
+            QBCore.Functions.Notify("Nu ai coca procesata, ce vrei sa impachetezi?","error")
     end
 end
 
@@ -189,27 +235,44 @@ function procesat_planta()
         while not HasModelLoaded("prop_cs_credit_card") and not HasModelLoaded("bkr_prop_coke_bakingsoda_o") do Citizen.Wait(10) end
         SetEntityHeading(ped)
         Citizen.Wait(10)
-        vector3(4976.94, -5132.98, -4.43)
+        item = QBCore.Functions.HasItem("planta coca")
+        if item then
+            QBCore.Functions.Progressbar("procesat_coca", ('procesam'), 20200, false, true, {
+                disableMovement = true,
+                disableCarMovement = true,
+                disableMouse = false,
+                disableCombat = true,
+                flags = 16,
+                }, {
+                }, {}, {}, function() -- Done
+                end)
+            local card = CreateObject(GetHashKey("prop_cs_credit_card"), coord.x, coord.y, coord.z, true, false, false)
+            local card2 = CreateObject(GetHashKey("prop_cs_credit_card"), coord.x, coord.y, coord.z, true, false, false)
+            local soda = CreateObject(GetHashKey("bkr_prop_coke_bakingsoda_o"), coord.x, coord.y, coord.z, true, false, false)
+            local gathScene = NetworkCreateSynchronisedScene(coord.x + 2  , coord.y + 0.5 , coord.z - 0.6 , 0.0, 0.0, 180.0 , 2, false, false, 1065353216, 0, 1.3)
+            NetworkAddPedToSynchronisedScene(ped, gathScene, animDict, "coke_cut_v5_coccutter", 1.5, -4.0, 1, 16, 1148846080, 0)
+            NetworkAddEntityToSynchronisedScene(card, gathScene, animDict, "coke_cut_v5_creditcard", 4.0, -8.0, 1)
+            NetworkAddEntityToSynchronisedScene(card2, gathScene, animDict, "coke_cut_v5_creditcard^1", 4.0, -8.0, 1)
+            NetworkAddEntityToSynchronisedScene(soda, gathScene, animDict, "coke_cut_v5_bakingsoda", 4.0, -8.0, 1)
+            NetworkStartSynchronisedScene(gathScene)
+            Citizen.Wait(20000)
+            NetworkStopSynchronisedScene(gathScene)
 
-        vector3(4980.71, -5132.64, -4.47)
-        local card = CreateObject(GetHashKey("prop_cs_credit_card"), coord.x, coord.y, coord.z, true, false, false)
-        local card2 = CreateObject(GetHashKey("prop_cs_credit_card"), coord.x, coord.y, coord.z, true, false, false)
-        local soda = CreateObject(GetHashKey("bkr_prop_coke_bakingsoda_o"), coord.x, coord.y, coord.z, true, false, false)
-        local gathScene = NetworkCreateSynchronisedScene(coord.x + 2  , coord.y + 0.5 , coord.z - 0.6 , 0.0, 0.0, 180.0 , 2, false, false, 1065353216, 0, 1.3)
-        NetworkAddPedToSynchronisedScene(ped, gathScene, animDict, "coke_cut_v5_coccutter", 1.5, -4.0, 1, 16, 1148846080, 0)
-        NetworkAddEntityToSynchronisedScene(card, gathScene, animDict, "coke_cut_v5_creditcard", 4.0, -8.0, 1)
-        NetworkAddEntityToSynchronisedScene(card2, gathScene, animDict, "coke_cut_v5_creditcard^1", 4.0, -8.0, 1)
-        NetworkAddEntityToSynchronisedScene(soda, gathScene, animDict, "coke_cut_v5_bakingsoda", 4.0, -8.0, 1)
-        NetworkStartSynchronisedScene(gathScene)
-        Citizen.Wait(20000)
-        NetworkStopSynchronisedScene(gathScene)
-        DeleteEntity(card)
-        DeleteEntity(card2)
-        DeleteEntity(soda)
-        Wait(3000)
-        StopAnimTask(ped, dict, anim, 1.0)
-        ClearPedTasksImmediately(ped)
-        Wait(3000)
+
+            DeleteEntity(card)
+            DeleteEntity(card2)
+            DeleteEntity(soda)
+            Wait(3000)
+            StopAnimTask(ped, dict, anim, 1.0)
+            ClearPedTasksImmediately(ped)
+            Wait(3000)
+            QBCore.Functions.Notify("Ai procesat coca cu succes!","success")
+            TriggerServerEvent("ef-cocaina:server:remove","planta coca")
+            TriggerServerEvent("ef-cocaina:server:add","coca procesata")
+        else 
+            QBCore.Functions.Notify("Nu ai planta coca, ce vrei sa procesezi?","error")
+
+        end
 end
 
 function spawn()
@@ -219,7 +282,6 @@ function spawn()
             while not HasModelLoaded(hashmic) do
             Wait(1)
             end
-
             local planta = CreateObject(hashmic, plante[k].coords, true , true ,false)
             PlaceObjectOnGroundProperly(planta)
             FreezeEntityPosition(planta,true)
@@ -247,6 +309,7 @@ function spawn()
                     },
                     distance = 1.5, -- This is the distance for you to be at for the target to turn blue, this is in GTA units and has to be a float value
                 })
+
                 PlaceObjectOnGroundProperly(mare)
                 FreezeEntityPosition(mare,true)
                 plante[k].status = "Mare" 
@@ -271,6 +334,13 @@ RegisterNetEvent("ef-cocaina:procesatcoca")
 AddEventHandler("ef-cocaina:procesatcoca",function()
     procesat_planta()
 end)
+
+
+RegisterNetEvent("ef-cocaina:infoliazacoca")
+AddEventHandler("ef-cocaina:infoliazacoca",function()
+    impachetat_planta()
+end)
+
 
 RegisterNetEvent("ef-cocaina:harvest")
 AddEventHandler("ef-cocaina:harvest", function()

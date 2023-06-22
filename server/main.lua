@@ -1,8 +1,17 @@
 RegisterNetEvent("ef-cocaina:server:harvest")
 AddEventHandler("ef-cocaina:server:harvest",function() 
     local ply = QBCore.Functions.GetPlayer(source)
-
     ply.Functions.AddItem("planta coca", 1)
+end)
 
+RegisterNetEvent("ef-cocaina:server:add")
+AddEventHandler("ef-cocaina:server:add",function(item) 
+    local ply = QBCore.Functions.GetPlayer(source)
+    ply.Functions.AddItem(item, 1)
+end)
 
+RegisterNetEvent("ef-cocaina:server:remove")
+AddEventHandler("ef-cocaina:server:remove",function(item) 
+    local ply = QBCore.Functions.GetPlayer(source)
+    ply.Functions.RemoveItem(item, 1)
 end)
